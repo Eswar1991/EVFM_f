@@ -1,10 +1,11 @@
-%'userip_copies_11NLevels_1.mat'--------'V','sigNoiseRatio','Doc_leftEV','Doc_leftEV_true'
-%Doc_left 600*11*no. of realisations
-%A_c terms 1,2,6,rhs_LSV1 are computed here
+%userip_copies_11NLevels_2.mat ----'U','sigNoiseRatio','Doc_rightEV','Doc_rightEV_true'
+%Doc_right 760*11*30
+%A_r terms 1,2,6,rhs_RSV1 are computed here
+
 
 clear all;
 set(0,'DefaultFigureWindowStyle','docked')
-load('userip_copies_11NLevels_1.mat');
+load('userip_copies_11NLevels_2.mat');
 load('Eps1');
 load('Eps2');
 load('Eps6');
@@ -15,22 +16,22 @@ term2_actual_6 = 0;
 term2_actual_1 = 0;
 term2_actual_2 = 0;
 
-for k=1:c_eps
-    term2_actual_6 = term2_actual_6 + V(:,1)'*E6Matrix(:,k);    
-    term2_actual_1 = term2_actual_1 +  V(:,1)'*E1Matrix(:,k);    
-    term2_actual_2 = term2_actual_2 + V(:,1)'*E2Matrix(:,k);
+for k=1:r_eps
+    term2_actual_6 = term2_actual_6 + E6Matrix(k,:)*U(:,1);    
+    term2_actual_1 = term2_actual_1 + E1Matrix(k,:)*U(:,1);    
+    term2_actual_2 = term2_actual_2 + E2Matrix(k,:)*U(:,1);
 
 end
 
-V_mean = zeros(200,11);
- V_mean_true=zeros(200,11);
+U_mean = zeros(760,11);
+U_mean_true=zeros(760,11);
 for j=1:11
     rhs = 0;
     rhs_true = 0;
     rhs_abs=0;
     rhs_abs_true =0;
-    summ = zeros(200,1);
-    sum_true = zeros(200,1);
+    summ = zeros(760,1);
+    sum_true = zeros(760,1);
     sum_diff_norm = 0;
     sum_diff_norm_true = 0;
     
@@ -52,16 +53,16 @@ for j=1:11
     std_A_first_column_sum_2_true =0;
     
     for i=1:30
-        rhs = rhs + sum(Doc_leftEV(:,j,i));
-        rhs_true = rhs_true + sum(Doc_leftEV_true(:,j,i));
+        rhs = rhs + sum(Doc_rightEV(:,j,i));
+        rhs_true = rhs_true + sum(Doc_rightEV_true(:,j,i));
         
-        rhs_abs = rhs_abs + power(   abs (sum(Doc_leftEV(:,j,i)) - sum(V(:,1))) , 2);        
-        rhs_abs_true = rhs_abs + power(    abs (sum(Doc_leftEV_true(:,j,i)) - sum(V(:,1))) , 2);
+        rhs_abs = rhs_abs + power(   abs (sum(Doc_rightEV(:,j,i)) - sum(U(:,1))) , 2);        
+        rhs_abs_true = rhs_abs + power(    abs (sum(Doc_rightEV_true(:,j,i)) - sum(U(:,1))) , 2);
         
-        summ = summ + Doc_leftEV(:,j,i);
-        sum_true = sum_true + Doc_leftEV_true(:,j,i);
-        sum_diff_norm = sum_diff_norm + norm(Doc_leftEV(:,j,i)-V(:,1),2);        
-        sum_diff_norm_true = sum_diff_norm_true + norm(Doc_leftEV_true(:,j,i)-V(:,1),2);
+        summ = summ + Doc_rightEV(:,j,i);
+        sum_true = sum_true + Doc_rightEV_true(:,j,i);
+        sum_diff_norm = sum_diff_norm + norm(Doc_rightEV(:,j,i)-U(:,1),2);        
+        sum_diff_norm_true = sum_diff_norm_true + norm(Doc_rightEV_true(:,j,i)-U(:,1),2);
         
         sum_across_rows_6 = 0;
         sum_across_rows_6_true =0;
@@ -71,16 +72,16 @@ for j=1:11
         
         sum_across_rows_2 = 0;
         sum_across_rows_2_true =0;
-        for k=1:c_eps
+        for k=1:r_eps
             
-            sum_across_rows_6 = sum_across_rows_6 +  Doc_leftEV(:,j,i)'*E6Matrix(:,k);            
-            sum_across_rows_6_true = sum_across_rows_6_true + Doc_leftEV_true(:,j,i)'*E6Matrix(:,k);
+            sum_across_rows_6 = sum_across_rows_6 + E6Matrix(k,:) * Doc_rightEV(:,j,i);            
+            sum_across_rows_6_true = sum_across_rows_6_true + E6Matrix(k,:) * Doc_rightEV_true(:,j,i);
             
-            sum_across_rows_1 = sum_across_rows_1 + Doc_leftEV(:,j,i)'*E1Matrix(:,k);            
-            sum_across_rows_1_true = sum_across_rows_1_true + Doc_leftEV_true(:,j,i)'*E1Matrix(:,k);
+            sum_across_rows_1 = sum_across_rows_1 + E1Matrix(k,:) * Doc_rightEV(:,j,i);            
+            sum_across_rows_1_true = sum_across_rows_1_true + E1Matrix(k,:) * Doc_rightEV_true(:,j,i);
             
-            sum_across_rows_2 = sum_across_rows_2 +Doc_leftEV(:,j,i)'*E2Matrix(:,k);            
-            sum_across_rows_2_true = sum_across_rows_2_true + Doc_leftEV_true(:,j,i)'*E2Matrix(:,k);
+            sum_across_rows_2 = sum_across_rows_2 + E2Matrix(k,:) * Doc_rightEV(:,j,i);            
+            sum_across_rows_2_true = sum_across_rows_2_true + E2Matrix(k,:) * Doc_rightEV_true(:,j,i);
         
         end
         A_first_colum_sum_6 = A_first_colum_sum_6 + sum_across_rows_6;        
@@ -102,35 +103,31 @@ for j=1:11
         std_A_first_column_sum_2_true = std_A_first_column_sum_2_true + (sum_across_rows_2_true  - term2_actual_2)^2;   
         
     end
-   
-    bias_rhs(j) = abs(rhs/30 - sum(V(:,1))) ;
-    bias_rhs_true(j) = abs(rhs_true/30 - sum(V(:,1)));
+    bias_rhs(j) = abs(rhs/30 - sum(U(:,1))) ;
+    bias_rhs_true(j) = abs(rhs_true/30 - sum(U(:,1)));
     
     std_rhs(j) = sqrt(rhs_abs/30);
     std_rhs_true(j) = sqrt(rhs_abs_true/30);
     
     bias_term2_6(j) = abs(A_first_colum_sum_6/30  - term2_actual_6);
     bias_term2_6_true(j) = abs(A_first_colum_sum_true_6/30 - term2_actual_6);
-        
-    mean1(j)=rhs/30; %LSV
-    mean2(j)=A_first_colum_sum_1/30; %Ac1
-    mean3(j)=A_first_colum_sum_2/30; %Ac2
-    mean4(j)=A_first_colum_sum_6/30; %Ac6
-
-
     bias_term2_1(j) = abs(A_first_colum_sum_1/30  - term2_actual_1);
     bias_term2_1_true(j) = abs(A_first_colum_sum_true_1/30 - term2_actual_1);
     bias_term2_2(j) = abs(A_first_colum_sum_2/30  - term2_actual_2);
     bias_term2_2_true(j) = abs(A_first_colum_sum_true_2/30 - term2_actual_2);
     
+    mean1(j)=rhs/30; %RSV
+    mean2(j)=A_first_colum_sum_1/30; %Ar1
+    mean3(j)=A_first_colum_sum_2/30; %Ar2
+    mean4(j)=A_first_colum_sum_6/30; %Ar6
     
-    std_term2_6(j) = sqrt(std_A_first_column_sum_6/30);  %std for Ac6  
-    std_term2_6_true(j) = sqrt(std_A_first_column_sum_6_true/30); 
+    std_term2_6(j) = sqrt(std_A_first_column_sum_6/30);    
+    std_term2_6_true(j) = sqrt(std_A_first_column_sum_6_true/30);
     
-    std_term2_1(j) = sqrt(std_A_first_column_sum_1/30);  %std for Ac1  
+    std_term2_1(j) = sqrt(std_A_first_column_sum_1/30);    
     std_term2_1_true(j) = sqrt(std_A_first_column_sum_1_true/30);
     
-    std_term2_2(j) = sqrt(std_A_first_column_sum_2/30);   %std for Ac2
+    std_term2_2(j) = sqrt(std_A_first_column_sum_2/30);    
     std_term2_2_true(j) = sqrt(std_A_first_column_sum_2_true/30);
     
     
@@ -142,8 +139,8 @@ end
 bias = zeros(1,11);
 bias_true=zeros(1,11);
 for i=1:11
-    bias(i)=norm(V(:,1)-V_mean(:,i),2);
-    bias_true(i) = norm(V(:,1)-V_mean_true(:,i),2);
+    bias(i)=norm(U(:,1)-U_mean(:,i),2);
+    bias_true(i) = norm(U(:,1)-U_mean_true(:,i),2);
 end
 %% Plot bias of the REV1
 
@@ -325,7 +322,7 @@ set(gca,'FontSize',20);
 xlabel('SNR (Signal-to-noise ratio)', 'interpreter', 'latex', 'FontSize', 22);
 ylabel('Std. Dev. of the $\sum\mathbf{A^r}$ term ', 'interpreter', 'latex', 'FontSize', 22);
 % zlabel('zlabel', 'interpreter', 'latex', 'FontSize', 22);
-title('Comparing the analytically obtained std. dev. for the summation-$\mathbf{A^c}$ term with the true value', 'interpreter', 'latex', 'FontSize', 22);
-legend({'$\sum\mathbf{A^c}$ term from $\varepsilon_1$ (analytical)','$\sum\mathbf{A^c}$ term from $\varepsilon_1$ (true)','$\sum\mathbf{A^c}$ term from $\varepsilon_2$ (analytical)','$\sum\mathbf{A^c}$ term from $\varepsilon_2$ (true)','$\sum\mathbf{A^c}$ term from $\varepsilon_6$ (analytical)','$\sum\mathbf{A^c}$ term from $\varepsilon_6$ (true)'},'FontSize', 20);
+title('Comparing the analytically obtained std. dev. for the summation-$\mathbf{A^r}$ term with the true value', 'interpreter', 'latex', 'FontSize', 22);
+legend({'$\sum\mathbf{A^r}$ term from $\varepsilon_1$ (analytical)','$\sum\mathbf{A^r}$ term from $\varepsilon_1$ (true)','$\sum\mathbf{A^r}$ term from $\varepsilon_2$ (analytical)','$\sum\mathbf{A^r}$ term from $\varepsilon_2$ (true)','$\sum\mathbf{A^r}$ term from $\varepsilon_6$ (analytical)','$\sum\mathbf{A^r}$ term from $\varepsilon_6$ (true)'},'FontSize', 20);
 h = legend;
 set(h, 'interpreter', 'latex');

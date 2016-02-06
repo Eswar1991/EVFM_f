@@ -1,6 +1,6 @@
 
-%This code is to find the left singular vectors from the perturbation of
-%column augmented strain matrix based on the Stewart iterative perturbation
+%This code is to find the right singular vectors from the perturbation of
+%row augmented strain matrix based on the Stewart iterative perturbation
 %scheme.
 
 %Here we can mention the singular vector to be perturbed in this code so
@@ -10,10 +10,10 @@
 %E1Matrix,E2Matrix,E6Matrix ----Strain matrices
 %A---Row augmented strain matrix
 %m,n---Dimension of A
-%U---Matrix whose columns are left singular vectors of A
-%S---Diagonal Matrix whose elements are singular values of A. 
-%V---Matrix whose columns are right singular vectors of A (Since we take
-%transpose this will be our left singular vectors)
+%U---Matrix whose columns are left singular vectors of A (Since we take
+%transpose this will be our right singular vectors)
+%S---Diagonal Matrix whose elements are singular values of A.
+%V---Matrix whose columns are right singular vectors of A
 clc;
 clear all;
 %% Obtaining the number of realisations
@@ -25,7 +25,7 @@ set(0,'DefaultFigureWindowStyle','docked');
 load('Eps1.mat');
 load('Eps2.mat');
 load('Eps6.mat');
-A = [E1Matrix, E2Matrix, E6Matrix];
+A=[E1Matrix;E2Matrix;E6Matrix];
 [m,n]=size(A);
 iOrder=1;
 if m<n
@@ -35,7 +35,7 @@ end
 [U,S,V]=svd(A);
 
 %%Swapping the rows and columns of singular values,singular vectors based on the eigen function input
-prompt2='Enter the left eigen function to be used : ';
+prompt2='Enter the right eigen function to be used : ';
 k=input(prompt2);
 swap=S(1,1);
 S(1,1)=S(k,k);
@@ -68,8 +68,9 @@ v1 = V(:,1);
 
 sigma1 = S1(1:1);
 sigNoiseRatio = [25 20 15 10 5  0 -5 -10 -15 -20 -25];
-Doc_leftEV = zeros(size(V,2),size(sigNoiseRatio,2),numCopies);
-Doc_leftEV_true = zeros(size(V,2),size(sigNoiseRatio,2),numCopies);
+Doc_rightEV = zeros(size(U,2),size(sigNoiseRatio,2),numCopies);
+Doc_rightEV_true = zeros(size(U,2),size(sigNoiseRatio,2),numCopies);
+
 
 for counter_copies = 1 : 1 :numCopies
 	
@@ -77,10 +78,9 @@ for counter_copies = 1 : 1 :numCopies
 	for counter=1:size(sigNoiseRatio,2)
 		[counter_copies,counter]
 		 
-        
-        [Atilde,E]=add_wgn(A,sigNoiseRatio(counter)); 
-		[Utrue,Strue,Vtrue] = svd(Atilde);
-        
+		[Atilde,E]=add_wgn(A,sigNoiseRatio(counter));
+		 
+		[Utrue,Strue,Vtrue] = svd(Atilde);  
 		% initialize iterates
 		x0 = v1;
 		gamma0 = sqrt(norm(sigma1 + u1'*E*v1)^2 + norm(U3'*E*v1)^2);
@@ -109,18 +109,18 @@ for counter_copies = 1 : 1 :numCopies
 			x = xvec(:,i);% right
 			y = yvec(:,i);% left
 			gamma = gammavec(i);
-			%
+			%Term for right singular vector
 			temp = gamma^2*eye(size(S2)) - S2*S2;
 			temp1 = temp\(V2'*E'*y + S2*U2'*E*x);
 			VHx = [sqrt(1 - norm(V2'*x)^2); temp1];
 			xvec(:,j) = V*VHx;
-			%
+			%Term for left singular vector
 			temp1 = sqrt(1 - norm(V2'*x)^2)*sigma1 + u1'*E*x;
 			temp2 = temp\(S2*V2'*E'*y + gamma^2*U2'*E*x);
 			temp3 = U3'*E*x;
 			UHy = [temp1; temp2; temp3];
 			yvec(:,j) = U*UHy;
-			%
+			%Computation of left singular vector
 			gammavec(j) = norm(Atilde*xvec(:,j));   
 			uvec(:,j) = yvec(:,j)/gammavec(j);
 
@@ -130,10 +130,12 @@ for counter_copies = 1 : 1 :numCopies
 		
 
 		
-		Doc_leftEV(:,counter,counter_copies) = xvec(:,2); %Since A=A' we are taking xvec as v.
-        Doc_leftEV_true(:,counter,counter_copies) = Vtrue(:,k); %First column of U here is the first right eigen vector of the untransposed row-augmented matrix
+		Doc_rightEV(:,counter,counter_copies) = uvec(:,2); %Since A=A' we are using uvec instead of v. (Left singular vector instead of right singular vector)
+        Doc_rightEV_true(:,counter,counter_copies) = Utrue(:,k); %First column of U here is the first right eigen vector of the untransposed row-augmented matrix
 		
 	end
 end
-save('userip_copies_11NLevels_1.mat','V','sigNoiseRatio','Doc_leftEV','Doc_leftEV_true');
+
+save('userip_copies_11NLevels_2.mat','U','sigNoiseRatio','Doc_rightEV','Doc_rightEV_true');
+
 
